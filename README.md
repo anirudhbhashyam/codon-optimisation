@@ -16,7 +16,7 @@ $ python main.py <sequence-type> <sequence>
 ## Arugments
 
 - `sequence-type`: Supported types are `A` and `a`. `A` represents a sequence of amino acids provided using name abbreviations (eg: "MVB..."). `a` represents a sequence of amino acids supplied in short form (eg: "TyrMetCys...")
-- `sequence`: A string encapsulates the sequence of amino acids.
+- `sequence`: A sequence of amino acids.
 
 # Dependencies
 

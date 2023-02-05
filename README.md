@@ -2,6 +2,10 @@
 
 A simple algorithm to implement codon optimisation for humans.
 
+## CI
+
+| Tests | ![test](https://www.github.com/anirudhbhashyam/codon-optimisation/actions/workflows/test.yml/badge.svg) |
+
 
 # Usage
 ```sh

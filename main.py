@@ -1,5 +1,6 @@
 import re
 import sys
+import argparse
 import itertools
 import functools
 
@@ -27,13 +28,12 @@ class AASequence:
     def optimise(self) -> str:
         out_seq = []
         for slice in self._seq_iter():
-            for i, codon in enumerate(slice):
+            new_seq = []
+            for codon in slice:
                 codon_space = AMINO_ACID_LOOKUP[CODON_LOOKUP[codon]]
-                out_seq.append(max(codon_space, key = lambda x: CODON_FREQUENCIES[x]))
-                if codon == "CAU":
-                    print(codon_space)
-
-        return ["AUG"] + out_seq
+                new_seq.append(max(codon_space, key = lambda x: CODON_FREQUENCIES[x]))
+            out_seq.append(["AUG"] + new_seq)
+        return out_seq
     
     def cai(self) -> float:
         weights = [
@@ -43,8 +43,15 @@ class AASequence:
         return functools.reduce(lambda x, y: x * y, weights) ** (1 / len(weights))
 
     @classmethod
-    def from_aminoacids(cls, s: str) -> Self:
+    def from_aminoacids_A(cls, s: str) -> Self:
         codon_seq = [AMINO_ACID_LOOKUP[c.upper()][0] for c in s]
+        start_indices = (i for i, x in enumerate(codon_seq) if x in START_CODONS)
+        return cls(codon_seq, start_indices)
+    
+    @classmethod
+    def from_aminoacids_a(cls, s: str) -> Self:
+        aa_seq = (AMINO_ACID_NAMES[name] for name in take_tuples(s))
+        codon_seq = [AMINO_ACID_LOOKUP[l][0] for l in aa_seq]
         start_indices = (i for i, x in enumerate(codon_seq) if x in START_CODONS)
         return cls(codon_seq, start_indices)
     
@@ -65,13 +72,32 @@ class AASequence:
             yield (triplet for triplet in itertools.takewhile(lambda x: x not in STOP_CODONS & START_CODONS, seq_slice))
 
 
+def process_args() -> argparse.Namespace:
+    args = argparse.ArgumentParser()
+    args.add_argument(
+        "mode",
+        type = str,
+        help = "The type of sequence provided."
+    )
+    args.add_argument(
+        "sequence",
+        type = str,
+        help = "The sequence to optimise."
+    )
+    return args.parse_args()
+
+
 def main() -> int:
-    seq = "MDIEAYLERIGYKKSRNKLDLETLTDILQHQIRAVPFENLNIHCGDAMDLGLEAIFDQVVRRNRGGWCLQVNHLLYWALTTIGFETTMLGGYVYSTPAKKYSTGMIHLLLQVTIDGRNYIVDAGFGRSYQMWQPLELISKDQPQVPCVFRLTEENGFWYLDQIRREQYIPNEEFLHSDLLEDSKYRKIYSFTLKPRTIEDFESMNTYLQTSPSSVFTSKSFCSLQTPDGVHCLVGFTLTHRRFNYKDNTDLIEFKTLSEEEIEKVLKNIFNISLQRKLVPKHGDRFFTI"
-    aa_seq = AASequence.from_aminoacids(seq)
-    print("".join(aa_seq.codon_seq))
-    # print(aa_seq.cai())
-    # print(" ".join(aa_seq.optimise()))
-    
+    args = process_args()
+    match args.mode:
+        case "A":
+            aa_seq = AASequence.from_aminoacids_A(args.sequence)
+        case "a":
+            aa_seq = AASequence.from_aminoacids_a(args.sequence)
+        case _:
+            raise ValueError(f"Sequence type {args.mode} not supported. Please give an amino acid sequence in reduced form.")
+    # print("".join(aa_seq.codon_seq))
+    print(["".join(slice) for slice in aa_seq.optimise()])
     return 0
 
 
